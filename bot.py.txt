@@ -59,7 +59,7 @@ async def add_payment(update: Update, context: CallbackContext, user_name: str) 
 جمع واریزی تا این لحظه: {total_amount:,.0f} تومن🔥
 
 🏆 رکورد واریزی در دست: {record_holder} (‼️{record_amount:,.0f}‼️)"""
-        
+
         await update.message.reply_text(message)
     except ValueError:
         await update.message.reply_text("❌ لطفاً فقط مبلغ را به عدد ارسال کنید.")
@@ -90,7 +90,7 @@ async def get_total(update: Update, context: CallbackContext) -> None:
 جمع واریزی تا این لحظه: {total_amount:,.0f} تومن🔥
 
 🏆 رکورد واریزی در دست: {record_holder} (‼️{record_amount:,.0f}‼️)"""
-    
+
     await update.message.reply_text(message)
 
 # 📌 ریست کردن واریزی‌ها (رکورد و نام کاربر حفظ می‌شود)
