@@ -36,12 +36,7 @@ async def handle_message(update: Update, context: CallbackContext) -> None:
                 [InlineKeyboardButton("✅ بله", callback_data=f'confirm_name_{text}')],
                 [InlineKeyboardButton("❌ خیر", callback_data='cancel_name')]
             ]))
-    else:
-        name, location, status = user_data
-        if status == "waiting_for_payment":
-            await add_payment(update, context, name, location)
-        else:
-            await update.message.reply_text(f"👋 خوش اومدی {name}!\nمبلغ واریزی رو بفرس تا ذخیره کنم.")
+   
 # 📌 ثبت و نمایش واریزی
 async def add_payment(update: Update, context: CallbackContext, user_name: str, location: str) -> None:
     user_id = update.message.from_user.id
