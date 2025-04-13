@@ -216,7 +216,7 @@ async def reset_payments(update: Update, context: CallbackContext) -> None:
     await update.message.reply_text("🔄 مجموع واریزی‌ها ریست شد، اما رکورد و نام کاربر حفظ شده است.")
 
 # 📌 ریست کامل اطلاعات
-async def full_reset(update: Update, context: CallbackContext) -> None:
+async def fulldel(update: Update, context: CallbackContext) -> None:
     cursor.execute("DELETE FROM payments")
     cursor.execute("DELETE FROM users")
     cursor.execute("DELETE FROM records")
@@ -271,7 +271,7 @@ def main():
     application.add_handler(CommandHandler("reset", reset_payments))
     application.add_handler(CommandHandler("editname", edit_name))
     application.add_handler(CommandHandler("editrecord", edit_record))
-    application.add_handler(CommandHandler("fullreset", full_reset))  # دستور fullreset اضافه شده
+    application.add_handler(CommandHandler("fulldel", fulldel))  # دستور fulldel اضافه شده
     application.add_handler(MessageHandler(filters.TEXT & ~filters.COMMAND, handle_message))
     application.add_handler(CallbackQueryHandler(button))  # دکمه‌ها
 
