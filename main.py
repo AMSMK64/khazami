@@ -24,6 +24,27 @@ async def handle_message(update: Update, context: CallbackContext) -> None:
     user_id = update.message.from_user.id
     text = update.message.text.strip()
 
+    # ✅ اول بررسی کن که آیا کاربر در حال ویرایشه یا نه
+    if 'editing' in context.user_data:
+        edit_type = context.user_data['editing']
+        del context.user_data['editing']
+
+        if edit_type == 'name':
+            cursor.execute("UPDATE users SET name=? WHERE user_id=?", (text, user_id))
+            conn.commit()
+            await update.message.reply_text(f"✅ اسم جدید با موفقیت ثبت شد: {text}")
+
+        elif edit_type == 'record':
+            try:
+                new_record = float(text.replace(",", "")) * 1000
+                cursor.execute("INSERT OR REPLACE INTO records (user_id, max_total) VALUES (?, ?)", (user_id, new_record))
+                conn.commit()
+                await update.message.reply_text(f"🏆 رکورد جدید با موفقیت ثبت شد: {new_record:,.0f} تومن")
+            except ValueError:
+                await update.message.reply_text("❌ لطفاً فقط عدد وارد کن.")
+        return  # 👈 جلوگیری از ادامه اجرا
+
+    # 👇 حالا اینجا بقیه بررسی‌ها رو انجام بده (مثلاً ثبت‌نام یا واریزی)
     cursor.execute("SELECT name, location, status FROM users WHERE user_id=?", (user_id,))
     user_data = cursor.fetchone()
 
@@ -42,6 +63,7 @@ async def handle_message(update: Update, context: CallbackContext) -> None:
             await add_payment(update, context, name, location)
         else:
             await update.message.reply_text(f"👋 خوش اومدی {name}!\nمبلغ واریزی رو بفرس تا ذخیره کنم.")
+
     # اگر کاربر در حال ویرایش است
     if 'editing' in context.user_data:
         edit_type = context.user_data['editing']
