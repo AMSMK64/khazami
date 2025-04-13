@@ -42,6 +42,27 @@ async def handle_message(update: Update, context: CallbackContext) -> None:
             await add_payment(update, context, name, location)
         else:
             await update.message.reply_text(f"👋 خوش اومدی {name}!\nمبلغ واریزی رو بفرس تا ذخیره کنم.")
+    # اگر کاربر در حال ویرایش است
+    if 'editing' in context.user_data:
+        edit_type = context.user_data['editing']
+        del context.user_data['editing']
+        text = update.message.text.strip()
+
+        if edit_type == 'name':
+            cursor.execute("UPDATE users SET name=? WHERE user_id=?", (text, user_id))
+            conn.commit()
+            await update.message.reply_text(f"✅ اسم جدید با موفقیت ثبت شد: {text}")
+
+        elif edit_type == 'record':
+            try:
+                new_record = float(text.replace(",", "")) * 1000
+                cursor.execute("INSERT OR REPLACE INTO records (user_id, max_total) VALUES (?, ?)", (user_id, new_record))
+                conn.commit()
+                await update.message.reply_text(f"🏆 رکورد جدید با موفقیت ثبت شد: {new_record:,.0f} تومن")
+            except ValueError:
+                await update.message.reply_text("❌ لطفاً فقط عدد وارد کن.")
+        return
+
 # 📌 ثبت و نمایش واریزی
 async def add_payment(update: Update, context: CallbackContext, user_name: str, location: str) -> None:
   user_id = update.message.from_user.id
@@ -194,6 +215,40 @@ async def reset_payments(update: Update, context: CallbackContext) -> None:
     conn.commit()
     await update.message.reply_text("🔄 مجموع واریزی‌ها ریست شد، اما رکورد و نام کاربر حفظ شده است.")
 
+# 📌 ریست کامل اطلاعات
+async def full_reset(update: Update, context: CallbackContext) -> None:
+    cursor.execute("DELETE FROM payments")
+    cursor.execute("DELETE FROM users")
+    cursor.execute("DELETE FROM records")
+    conn.commit()
+    await update.message.reply_text("🚨 تمامی اطلاعات کاربران، واریزی‌ها و رکوردها حذف شدند! حالا از ابتدا شروع کنید.")
+
+# 📌 تغییر اسم کاربر
+async def edit_name(update: Update, context: CallbackContext) -> None:
+    user_id = update.message.from_user.id
+    cursor.execute("SELECT name FROM users WHERE user_id=?", (user_id,))
+    data = cursor.fetchone()
+
+    if not data:
+        await update.message.reply_text("👤 اول باید با فرستادن اسم، ثبت‌نام کنی.")
+        return
+
+    await update.message.reply_text("📝 لطفاً اسم جدیدت رو ارسال کن:")
+    context.user_data['editing'] = 'name'
+
+# 📌 تغییر رکورد دستی (اختیاری – فقط در صورت نیاز به رکورد دلخواه)
+async def edit_record(update: Update, context: CallbackContext) -> None:
+    user_id = update.message.from_user.id
+    cursor.execute("SELECT name FROM users WHERE user_id=?", (user_id,))
+    data = cursor.fetchone()
+
+    if not data:
+        await update.message.reply_text("👤 اول باید ثبت‌نام کنی.")
+        return
+
+    await update.message.reply_text("🏆 لطفاً رکورد جدیدت رو (فقط عدد به تومان) ارسال کن:")
+    context.user_data['editing'] = 'record'
+
 # 📌 شروع ربات
 async def start(update: Update, context: CallbackContext) -> None:
     user_id = update.message.from_user.id
@@ -214,6 +269,9 @@ def main():
     application.add_handler(CommandHandler("start", start))
     application.add_handler(CommandHandler("total", get_total))
     application.add_handler(CommandHandler("reset", reset_payments))
+    application.add_handler(CommandHandler("editname", edit_name))
+    application.add_handler(CommandHandler("editrecord", edit_record))
+    application.add_handler(CommandHandler("fullreset", full_reset))  # دستور fullreset اضافه شده
     application.add_handler(MessageHandler(filters.TEXT & ~filters.COMMAND, handle_message))
     application.add_handler(CallbackQueryHandler(button))  # دکمه‌ها
 
