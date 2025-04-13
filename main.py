@@ -30,10 +30,6 @@ async def handle_message(update: Update, context: CallbackContext) -> None:
     if user_data is None:
         context.user_data['temp_name'] = text
 
-    if 'editing' in context.user_data:
-    ...
-    return  # ❗️حتماً این return باشه تا ادامه کد اجرا نشه
-   
         await update.message.reply_text(
             f"آیا مطمئن هستید که می‌خواهید نام شما به عنوان «{text}» ثبت شود؟",
             reply_markup=InlineKeyboardMarkup([
