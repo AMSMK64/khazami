@@ -47,6 +47,31 @@ async def add_payment(update: Update, context: CallbackContext, user_name: str, 
   user_id = update.message.from_user.id
   text = update.message.text.strip()
 
+    async def edit_record(update: Update, context: CallbackContext) -> None:
+    user_id = update.message.from_user.id
+    if not context.args:
+        await update.message.reply_text("❗️ لطفاً مقدار رکورد جدید را بعد از دستور وارد کنید.\nمثال: /editrecord 250000")
+        return
+
+    try:
+        new_record = float(context.args[0])
+        cursor.execute("INSERT OR REPLACE INTO records (user_id, max_total) VALUES (?, ?)", (user_id, new_record))
+        conn.commit()
+        await update.message.reply_text(f"✅ رکورد جدید شما ثبت شد: {new_record:,.0f} تومان")
+    except ValueError:
+        await update.message.reply_text("❌ لطفاً مقدار را به عدد صحیح وارد کنید.")
+
+async def edit_name(update: Update, context: CallbackContext) -> None:
+    user_id = update.message.from_user.id
+    if not context.args:
+        await update.message.reply_text("❗️ لطفاً اسم جدید خود را بعد از دستور وارد کنید.\nمثال: /editname علی")
+        return
+
+    new_name = ' '.join(context.args)
+    cursor.execute("UPDATE users SET name=? WHERE user_id=?", (new_name, user_id))
+    conn.commit()
+    await update.message.reply_text(f"✅ اسم جدید شما با موفقیت ثبت شد: {new_name}")
+
   try:
       amount = float(text) * 1000  # 👈 ضرب مقدار ورودی در ۱۰۰۰
       cursor.execute("INSERT INTO payments (user_id, amount) VALUES (?, ?)", (user_id, amount))
@@ -216,6 +241,8 @@ def main():
     application.add_handler(CommandHandler("reset", reset_payments))
     application.add_handler(MessageHandler(filters.TEXT & ~filters.COMMAND, handle_message))
     application.add_handler(CallbackQueryHandler(button))  # دکمه‌ها
+    application.add_handler(CommandHandler("editname", edit_name))
+    application.add_handler(CommandHandler("editrecord", edit_record))
 
     print("🤖 ربات در حال اجرا است...")
     application.run_polling()
